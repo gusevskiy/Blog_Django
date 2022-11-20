@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.shortcuts import render, get_object_or_404, redirect
 
 from .forms import PostForm, CommentForm
-from .models import Comment, Post, User, Group, Follow
+from .models import Post, User, Group, Follow
 # import paginator
 from .utils import get_paginated_objects
 
@@ -29,7 +29,6 @@ def group_posts(request, slug):
 def profile(request, username):
     """user page"""
     author = get_object_or_404(User, username=username)
-    posts = Post.objects.filter(author=author)
     posts = author.posts.all()
     following = False
     if request.user.is_authenticated:
@@ -52,30 +51,31 @@ def profile(request, username):
 def post_detail(request, post_id):
     """page of one post"""
     post = get_object_or_404(Post, id=post_id)
-    template = 'posts/post_detail.html'
-    form = CommentForm(request.POST or None)
-    comments = Comment.objects.filter(post=post)
+    comments = post.comments.all()
+    form = CommentForm(request.GET or None)
     context = {
         'post': post,
         'form': form,
         'comments': comments,
     }
-    return render(request, template, context)
-    # return render(request, 'posts/post_detail.html', context)
+    return render(request, 'posts/post_detail.html', context)
 
 
 @login_required
 def post_create(request):
     """check and save post"""
     form = PostForm()
+    form = PostForm(request.POST or None, files=request.FILES or None)
     if request.method == 'POST':
-        form = PostForm(request.POST or None, files=request.FILES or None)
         if form.is_valid():
             new_post = form.save(commit=False)
             new_post.author = request.user
             new_post.save()
-            return redirect(reverse(
-                'posts:profile', kwargs={'username': request.user.username})
+            return redirect(
+                reverse(
+                    'posts:profile',
+                    kwargs={'username': request.user.username}
+                )
             )
     return render(
         request, 'posts/post_create.html', {'form': form, 'is_edit': False}
@@ -120,7 +120,6 @@ def add_comment(request, post_id):
 def follow_index(request):
     page_obj = Post.objects.filter(author__following__user=request.user)
     page_count = len(page_obj)
-    print(page_count)
     context = {
         'page_obj': page_obj,
         'page_count': page_count,
@@ -139,11 +138,11 @@ def profile_follow(request, username):
             user=request.user,
             author=author
         )
-    return redirect('/follow/')
+    return redirect('posts:follow_index')
 
 
 @login_required
 def profile_unfollow(request, username):
     author = get_object_or_404(User, username=username)
     Follow.objects.filter(user=request.user, author=author).delete()
-    return redirect('/follow/')
+    return redirect('posts:follow_index')

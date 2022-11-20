@@ -57,18 +57,21 @@ class PostFormTests(TestCase):
             )
         )
         self.assertEqual(Post.objects.count(), self.posts_count + 1)
-        self.assertTrue(Post.objects.filter(text="Тестовый текст").exists())
-        self.assertTrue(Post.objects.filter(group=self.group.id).exists())
+        self.assertTrue(
+            Post.objects.filter(
+                text=form_data["text"], group=self.group.id
+            ).exists()
+        )
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_create_form_in_post_invalid_data(self):
         """Попытка запис в Post. пустой формы"""
-        form_data = {"text": "", }
+        form_data = {"text": ""}
         response = self.authorized_client.post(
             reverse("posts:post_create"), data=form_data, follow=True
         )
         self.assertEqual(Post.objects.count(), self.posts_count)
-        self.assertFalse(Post.objects.filter(text="").exists())
+        self.assertFalse(Post.objects.filter(text=form_data.values()).exists())
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_edit_form_in_post(self):
@@ -92,7 +95,7 @@ class PostFormTests(TestCase):
         """Не изменит запись в Post если неавторизован."""
         form_data = {"text": "Изменяем текст", "group": self.group.id}
         response = self.guest_client.post(
-            reverse("posts:post_edit", args=({self.post.id})),
+            reverse("posts:post_edit", kwargs={'post_id': self.post.id}),
             data=form_data,
             follow=True,
         )

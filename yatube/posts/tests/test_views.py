@@ -1,6 +1,7 @@
 from django.test import Client, TestCase
 from django.urls import reverse
 from django import forms
+from django.core.cache import cache
 
 from ..models import Follow, Post, Group, User, Comment
 
@@ -47,14 +48,14 @@ class ViewTests(TestCase):
         templates_pages_names = {
             'posts/index.html': reverse('posts:index'),
             'posts/group_list.html': reverse(
-                'posts:group_list', kwargs={'slug': f'{self.group.slug}'}
+                'posts:group_list', kwargs={'slug': self.group.slug}
             ),
             'posts/post_create.html': reverse('posts:post_create'),
             'posts/post_detail.html': reverse(
                 'posts:post_detail', kwargs={'post_id': self.post.id}
             ),
             'posts/profile.html': reverse(
-                'posts:profile', kwargs={'username': f'{self.user}'}
+                'posts:profile', kwargs={'username': self.user}
             ),
         }
 
@@ -92,7 +93,7 @@ class ViewTests(TestCase):
     def test_post_detail_context_guest(self):
         """ profile с правельным контекстом."""
         response = self.guest_client.get(
-            reverse("posts:profile", args=(self.post.author,))
+            reverse("posts:profile", kwargs={'username': self.post.author})
         )
         expected = list(
             Post.objects.filter(author_id=self.user.id)[:self.QUANTITY_POSTS]
@@ -149,7 +150,7 @@ class ViewTests(TestCase):
             )
         )
         self.assertTrue(
-            Comment.objects.filter(text="Тестовый коммент").exists()
+            Comment.objects.filter(text=form_data["text"]).exists()
         )
 
     def test_appears_new_comment_page(self):
@@ -168,16 +169,25 @@ class ViewTests(TestCase):
         )
         self.assertEqual(Comment.objects.count(), comments_count + 1)
         self.assertTrue(
-            Comment.objects.filter(text="Тестовый коммент").exists()
+            Comment.objects.filter(text=form_data["text"]).exists()
         )
 
     def test_cashe_index(self):
         """Проверка кеша на главной странице"""
-        response = self.authorized_client.get(reverse('posts:index'))
-        cashe_content = response.content
-        Post.objects.latest('pub_date').delete()
-        response = self.authorized_client.get(reverse('posts:index'))
-        self.assertEqual(cashe_content, response.content)
+        post = Post.objects.create(
+            text='Тестовый пост',
+            author=self.user)
+        content_add = self.authorized_client.get(
+            reverse('posts:index')
+        ).content
+        post.delete()
+        content_delete = self.authorized_client.get(
+            reverse('posts:index')).content
+        self.assertEqual(content_add, content_delete)
+        cache.clear()
+        content_cache_clear = self.authorized_client.get(
+            reverse('posts:index')).content
+        self.assertNotEqual(content_add, content_cache_clear)
 
 
 class Follow_Test(TestCase):
@@ -194,16 +204,20 @@ class Follow_Test(TestCase):
     def test_follow(self):
         """Авторизованный может подписаться"""
         self.client_autorized.get(
-            reverse("posts:profile_follow",
-                    args=[self.user_following.username])
+            reverse(
+                "posts:profile_follow",
+                kwargs={'username': self.user_following}
+            )
         )
         self.assertIsNotNone(Follow.objects.first())
 
     def test_unfollow(self):
         """Авторизованный может отписаться"""
         self.client_autorized.get(
-            reverse("posts:profile_unfollow",
-                    args=[self.user_following.username])
+            reverse(
+                "posts:profile_unfollow",
+                kwargs={'username': self.user_following}
+            )
         )
         self.assertIsNone(Follow.objects.first())
 
@@ -211,7 +225,8 @@ class Follow_Test(TestCase):
         """Пост у авторизованного и не авторизованного пользователя"""
         if self.client_autorized.get(
             reverse(
-                "posts:profile_follow", args=[self.user_following.username]
+                "posts:profile_follow",
+                kwargs={'username': self.user_following}
             )
         ):
             response = self.client_autorized.get(reverse("posts:follow_index"))
