@@ -145,6 +145,7 @@ LOGIN_REDIRECT_URL = 'posts:index'
 # перенаправление авторизованного пользователя
 # LOGOUT_REDIRECT_URL = 'posts:index'
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 #  подключаем движок filebased.EmailBackend
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'

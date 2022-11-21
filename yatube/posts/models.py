@@ -69,7 +69,6 @@ class Post(models.Model):
 class Comment(models.Model):
     post = models.ForeignKey(
         Post,
-        blank=True,
         on_delete=models.CASCADE,
         related_name="comments",
         verbose_name="Пост коментария",
@@ -102,7 +101,6 @@ class Follow(models.Model):
         verbose_name="Пользователь",
         on_delete=models.CASCADE,
         related_name='follower',
-        unique=True,
     )
     author = models.ForeignKey(
         User,
@@ -113,3 +111,11 @@ class Follow(models.Model):
 
     def __str__(self):
         return f'{self.user}-->{self.author}'
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'author'],
+                name='unique follow'
+            ),
+        ]

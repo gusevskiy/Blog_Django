@@ -31,11 +31,6 @@ class ViewTests(TestCase):
             )
         Post.objects.bulk_create(cls.page_count)
 
-        cls.comment = Comment.objects.create(
-            author=cls.user,
-            text="Тестовый комментарий",
-        )
-
     def setUp(self):
         self.guest_client = Client()
         self.authorized_client = Client()
