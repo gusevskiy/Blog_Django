@@ -49,9 +49,10 @@ class Post(models.Model):
         help_text='Группа, к которой будет относится пост'
     )
     image = models.ImageField(
-        'Картинка',
+        verbose_name='Картинка',
         upload_to='posts/',
-        blank=True
+        blank=True,
+        null=True,
     )
 
     def __str__(self):
@@ -67,16 +68,26 @@ class Post(models.Model):
 
 class Comment(models.Model):
     post = models.ForeignKey(
-        Post, blank=True, null=True, on_delete=models.SET_NULL,
-        related_name="comments"
+        Post,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="comments",
+        verbose_name="Пост коментария",
     )
     author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="comments"
+        User,
+        on_delete=models.CASCADE,
+        related_name="comments",
+        verbose_name="Автор коментария",
     )
     text = models.TextField(
-        "Текст комментария", help_text="Введите текст комментария"
+        verbose_name="Текст комментария",
+        help_text="Введите текст комментария",
     )
-    created = models.DateTimeField("Дата публикации", auto_now_add=True)
+    created = models.DateTimeField(
+        verbose_name="Дата публикации",
+        auto_now_add=True,
+    )
 
     class Meta:
         ordering = ["-created"]
@@ -88,11 +99,14 @@ class Comment(models.Model):
 class Follow(models.Model):
     user = models.ForeignKey(
         User,
+        verbose_name="Пользователь",
         on_delete=models.CASCADE,
         related_name='follower',
+        unique=True,
     )
     author = models.ForeignKey(
         User,
+        verbose_name="Автор",
         on_delete=models.CASCADE,
         related_name='following',
     )

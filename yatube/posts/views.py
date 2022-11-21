@@ -11,7 +11,6 @@ from .utils import get_paginated_objects
 def index(request):
     """main page"""
     context = get_paginated_objects(Post.objects.all(), request)
-    # print(context.get('page_obj'))
     return render(request, "posts/index.html", context)
 
 
@@ -32,11 +31,10 @@ def profile(request, username):
     posts = author.posts.all()
     following = False
     if request.user.is_authenticated:
-        following = (
-            Follow.objects.filter(
-                user=request.user
-            ).filter(author=author).exists()
-        )
+        following = Follow.objects.filter(
+            user=request.user,
+            author=author
+        ).exists()
     user_is_author = request.user == author
     context = {
         'author': author,
@@ -52,7 +50,7 @@ def post_detail(request, post_id):
     """page of one post"""
     post = get_object_or_404(Post, id=post_id)
     comments = post.comments.all()
-    form = CommentForm(request.GET or None)
+    form = CommentForm()
     context = {
         'post': post,
         'form': form,
@@ -64,7 +62,6 @@ def post_detail(request, post_id):
 @login_required
 def post_create(request):
     """check and save post"""
-    form = PostForm()
     form = PostForm(request.POST or None, files=request.FILES or None)
     if request.method == 'POST':
         if form.is_valid():
@@ -107,7 +104,7 @@ def post_edit(request, post_id):
 @login_required
 def add_comment(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    form = CommentForm(request.POST or None)
+    form = CommentForm(request.POST)
     if form.is_valid():
         comment = form.save(commit=False)
         comment.author = request.user
@@ -132,8 +129,7 @@ def follow_index(request):
 @login_required
 def profile_follow(request, username):
     author = get_object_or_404(User, username=username)
-    user = request.user
-    if user != author:
+    if request.user != author:
         Follow.objects.get_or_create(
             user=request.user,
             author=author
