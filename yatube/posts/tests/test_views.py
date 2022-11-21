@@ -62,7 +62,7 @@ class ViewTests(TestCase):
     def test_indext_context(self):
         """index C правильным контекстом"""
         response = self.guest_client.get(reverse('posts:index'))
-        page = list(Post.objects.all()[:10])
+        page = list(Post.objects.all()[:self.QUANTITY_POSTS])
         self.assertEqual(list(response.context['page_obj']), page)
 
     def test_group_list_context(self):
@@ -172,64 +172,86 @@ class ViewTests(TestCase):
         cache.clear()
         post = Post.objects.create(
             text='Тестовый пост',
-            author=self.user)
+            author=self.user
+        )
         content_add = self.authorized_client.get(
             reverse('posts:index')
         ).content
         post.delete()
         content_delete = self.authorized_client.get(
-            reverse('posts:index')).content
+            reverse('posts:index')
+        ).content
         self.assertEqual(content_add, content_delete)
         cache.clear()
         content_cache_clear = self.authorized_client.get(
-            reverse('posts:index')).content
+            reverse('posts:index')
+        ).content
         self.assertNotEqual(content_add, content_cache_clear)
 
 
-class FollowTest(TestCase):
+class FollowViewsTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.post_autor = User.objects.create(
+            username='post_autor',
+        )
+        cls.post_follower = User.objects.create(
+            username='post_follower',
+        )
+        cls.post = Post.objects.create(
+            text='Подпишись на меня',
+            author=cls.post_autor,
+        )
+
     def setUp(self):
-        self.user = User.objects.create_user(username="test_user_1")
-        self.user_following = User.objects.create_user(username="test_user_2")
-        self.guest_client = Client()
-        self.client_autorized = Client()
-        self.client_autorized.force_login(self.user)
-        self.text = "test_text"
-        self.post = Post.objects.create(
-            text=self.text, author=self.user_following
-        )
+        cache.clear()
+        self.author_client = Client()
+        self.author_client.force_login(self.post_follower)
+        self.follower_client = Client()
+        self.follower_client.force_login(self.post_autor)
 
-    def test_follow(self):
-        """Авторизованный может подписаться"""
-        self.client_autorized.get(
+    def test_follow_on_user(self):
+        """Проверка подписки на пользователя."""
+        count_follow = Follow.objects.count()
+        self.follower_client.post(
             reverse(
-                "posts:profile_follow",
-                kwargs={'username': self.user_following}
-            )
-        )
-        self.assertIsNotNone(Follow.objects.first())
+                'posts:profile_follow',
+                kwargs={'username': self.post_follower}))
+        follow = Follow.objects.all().latest('id')
+        self.assertEqual(Follow.objects.count(), count_follow + 1)
+        self.assertEqual(follow.author_id, self.post_follower.id)
+        self.assertEqual(follow.user_id, self.post_autor.id)
 
-    def test_unfollow(self):
-        """Авторизованный может отписаться"""
-        self.client_autorized.get(
+    def test_unfollow_on_user(self):
+        """Проверка отписки от пользователя."""
+        Follow.objects.create(
+            user=self.post_autor,
+            author=self.post_follower)
+        count_follow = Follow.objects.count()
+        self.follower_client.post(
             reverse(
-                "posts:profile_unfollow",
-                kwargs={'username': self.user_following}
-            )
-        )
-        self.assertIsNone(Follow.objects.first())
+                'posts:profile_unfollow',
+                kwargs={'username': self.post_follower}))
+        self.assertEqual(Follow.objects.count(), count_follow - 1)
 
-    def test_post_follow_index(self):
-        """Пост у авторизованного пользователя"""
-        self.client_autorized.get(
-            reverse(
-                "posts:profile_follow",
-                kwargs={'username': self.user_following}
-            )
-        )
-        resp = self.client_autorized.get(reverse("posts:follow_index"))
-        self.assertContains(resp, self.text)
+    def test_follow_on_authors(self):
+        """Проверка записей у тех кто подписан."""
+        post = Post.objects.create(
+            author=self.post_autor,
+            text="Подпишись на меня")
+        Follow.objects.create(
+            user=self.post_follower,
+            author=self.post_autor)
+        response = self.author_client.get(
+            reverse('posts:follow_index'))
+        self.assertIn(post, response.context['page_obj'].object_list)
 
-    def test_post_not_follow_index(self):
-        """Пост у не авторизованного пользователя"""
-        response = self.client_autorized.get(reverse("posts:follow_index"))
-        self.assertNotContains(response, self.text)
+    def test_notfollow_on_authors(self):
+        """Проверка записей у тех кто не подписан."""
+        post = Post.objects.create(
+            author=self.post_autor,
+            text="Подпишись на меня")
+        response = self.author_client.get(
+            reverse('posts:follow_index'))
+        self.assertNotIn(post, response.context['page_obj'].object_list)
