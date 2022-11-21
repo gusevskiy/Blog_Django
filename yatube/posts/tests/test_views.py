@@ -174,6 +174,7 @@ class ViewTests(TestCase):
 
     def test_cashe_index(self):
         """Проверка кеша на главной странице"""
+        cache.clear()
         post = Post.objects.create(
             text='Тестовый пост',
             author=self.user)
@@ -190,10 +191,11 @@ class ViewTests(TestCase):
         self.assertNotEqual(content_add, content_cache_clear)
 
 
-class Follow_Test(TestCase):
+class FollowTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="test_user_1")
         self.user_following = User.objects.create_user(username="test_user_2")
+        self.guest_client = Client()
         self.client_autorized = Client()
         self.client_autorized.force_login(self.user)
         self.text = "test_text"
@@ -222,17 +224,17 @@ class Follow_Test(TestCase):
         self.assertIsNone(Follow.objects.first())
 
     def test_post_follow_index(self):
-        """Пост у авторизованного и не авторизованного пользователя"""
-        if self.client_autorized.get(
+        """Пост у авторизованного пользователя"""
+        self.client_autorized.get(
             reverse(
                 "posts:profile_follow",
                 kwargs={'username': self.user_following}
             )
-        ):
-            response = self.client_autorized.get(reverse("posts:follow_index"))
-            self.assertContains(response, self.text)
-        else:
-            response = self.client_autorized.get(
-                reverse("posts:follow_indexs")
-            )
-            self.assertNotContains(response, self.text)
+        )
+        resp = self.client_autorized.get(reverse("posts:follow_index"))
+        self.assertContains(resp, self.text)
+
+    def test_post_not_follow_index(self):
+        """Пост у не авторизованного пользователя"""
+        response = self.client_autorized.get(reverse("posts:follow_index"))
+        self.assertNotContains(response, self.text)
