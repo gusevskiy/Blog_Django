@@ -54,13 +54,13 @@
                 </li>
                 <li class="nav-item">
                         <a class="nav-link link-light" 
-                        href="{% url 'logout' %}">
+                        href="{% url 'users:logout' %}">
                         Выйти
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link 
-                        {% if view_name  == 'space_posts:profile' %}
+                        {% if view_name  == 'posts:profile' %}
                         active
                         {% endif %}  link-light"
                         href="{% url 'posts:profile' user.username %}"
@@ -71,10 +71,10 @@
                 {% else %}
                 <li class="nav-item">
                     <a class="nav-link  
-                        {% if view_name == 'login' %}
+                        {% if view_name == 'users:login' %}
                         active
                         {% endif %} link-light"
-                        href="{% url 'login' %}"
+                        href="{% url 'users:login' %}"
                     >
                         Войти
                     </a>

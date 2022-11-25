@@ -1,4 +1,4 @@
-# core/templatetags/user_filters.py
+# core/templatetags/
 from django import template
 
 # В template.Library зарегистрированы все встроенные теги и фильтры шаблонов;

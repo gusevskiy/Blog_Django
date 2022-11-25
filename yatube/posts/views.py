@@ -10,14 +10,18 @@ from .utils import get_paginated_objects
 
 def index(request):
     """main page"""
-    context = get_paginated_objects(Post.objects.all(), request)
+    context = get_paginated_objects(
+        Post.objects
+        .select_related('author', 'group')
+        , request
+    )
     return render(request, "posts/index.html", context)
 
 
 def group_posts(request, slug):
     """users posts group"""
     group = get_object_or_404(Group, slug=slug)
-    posts = group.posts.all()
+    posts = group.posts.select_related('author', 'group')
     context = {
         "group": group,
     }
@@ -28,7 +32,7 @@ def group_posts(request, slug):
 def profile(request, username):
     """user page"""
     author = get_object_or_404(User, username=username)
-    posts = author.posts.all()
+    posts = author.posts.select_related('author', 'group')
     following = False
     if request.user.is_authenticated:
         following = Follow.objects.filter(
@@ -49,7 +53,7 @@ def profile(request, username):
 def post_detail(request, post_id):
     """page of one post"""
     post = get_object_or_404(Post, id=post_id)
-    comments = post.comments.all()
+    comments = post.comments.all().select_related('author')
     form = CommentForm()
     context = {
         'post': post,
@@ -115,7 +119,9 @@ def add_comment(request, post_id):
 
 @login_required
 def follow_index(request):
-    page_obj = Post.objects.filter(author__following__user=request.user)
+    page_obj = Post.objects.filter(
+        author__following__user=request.user
+    ).select_related('author', 'group')
     page_count = len(page_obj)
     context = {
         'page_obj': page_obj,

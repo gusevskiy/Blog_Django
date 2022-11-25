@@ -27,11 +27,16 @@ DEBUG = True
 
 # Запрос к проекту через client
 ALLOWED_HOSTS = [
-    'localhost',
+    'http://gusevskiy.pythonanywhere.com/',
     '127.0.0.1',
     '[::1]',
     'testserver',
 ]
+
+# ALLOWED_HOSTS = [
+#     'www.gusevskiy.pythonanywhere.com',
+#     'gusevskiy.pythonanywhere.com',
+# ]
 
 
 # Application definition
@@ -48,6 +53,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'sorl.thumbnail',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
@@ -58,6 +64,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'yatube.urls'
@@ -152,7 +159,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 # указываем директорию, в которую будут складываться файлы писем
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
 
-# DEBUG = True
+DEBUG = True
 
 CSRF_FAILURE_VIEW = 'core.views.csrf_failure'
 
@@ -167,3 +174,9 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
 }
+
+# для debug_toolbar
+# Добавьте IP адреса, при обращении с которых будет доступен DjDT
+INTERNAL_IPS = [
+    '127.0.0.1',
+] 

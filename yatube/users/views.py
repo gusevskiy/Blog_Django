@@ -10,6 +10,7 @@ class SignUp(CreateView):
     # C какой формой будет работать этот view-класс
     form_class = CreationForm
     # Куда переадресовать пользователя после того, как он отправит форму
+    success_url = reverse_lazy('posts:index')
     sussess_url = reverse_lazy('posts:index')
     # Какой шаблон применить для отображения веб-формы
     template_name = 'users/signup.html'
