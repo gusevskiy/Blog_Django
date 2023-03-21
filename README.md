@@ -19,15 +19,24 @@
 
     создайте виртуальное окружение
 
-    python -m venv venv
+    Windows: py -3.9 -m venv venv
+    Linux: python3.9 -m venv venv
 
     запустите виртуальное окружение
 
-    для windows: source venv/script/activate
+    для Windows: source venv/script/activate
+    для Linux: source venv/bin/activate
 
     установите требуемые приложения:
 
     pip install -r requirements.txt
+
+    Для отображение стилей нужно создать в папке проекта yatube
+    папку static
+    ├── static  # Директория для статических файлов проекта
+    │   ├── img # Директория для изображений
+    │   └── css # Директория для файлов таблиц стилей
+    │       └── bootstrap.min.css
 
     примените миграции Django:
 
