@@ -27,10 +27,7 @@ DEBUG = True
 
 # Запрос к проекту через client
 ALLOWED_HOSTS = [
-    'http://gusevskiy.pythonanywhere.com/',
-    '127.0.0.1',
-    '[::1]',
-    'testserver',
+    '84.201.172.201', '127.0.0.1', 'localhost'
 ]
 
 # ALLOWED_HOSTS = [
@@ -159,7 +156,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 # указываем директорию, в которую будут складываться файлы писем
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
 
-DEBUG = True
+DEBUG = False
 
 CSRF_FAILURE_VIEW = 'core.views.csrf_failure'
 
